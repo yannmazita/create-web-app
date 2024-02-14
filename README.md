@@ -1,4 +1,4 @@
-# create-web-ap
+# create-web-app
 
 Scaffholding to create a web application using Vite + Vue + Typescript, FastAPI + SQLModel + OpenAuth + Python
 
@@ -45,3 +45,7 @@ Then start the uvicorn server (development):
 ```commandline
 uvicorn app.main:api --reload
 ```
+
+## How it works
+
+### Backend
