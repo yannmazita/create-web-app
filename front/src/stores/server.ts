@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
-import { reactive, watch } from 'vue';
-import { useClientStore } from '@/stores/client.ts';
+import { reactive } from 'vue';
 import { ServerStats } from '@/interfaces.ts';
 
 export const useServerStore = defineStore('server', () => {

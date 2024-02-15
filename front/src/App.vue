@@ -13,10 +13,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useClientStore } from '@/stores/client.ts';
+import { useServerStore } from '@/stores/server.ts';
 
 const clientStore = useClientStore();
+const serverStore = useServerStore();
+const { socketMessage } = storeToRefs(clientStore);
 
 onMounted(async () => {
     try {
@@ -27,6 +31,12 @@ onMounted(async () => {
         }));
     } catch (error) {
         console.log(error)
+    }
+});
+
+watch(socketMessage, (newMessage) => {
+    if (newMessage.action === 'server_stats') {
+        Object.assign(serverStore.serverStats, newMessage.data);
     }
 });
 </script>

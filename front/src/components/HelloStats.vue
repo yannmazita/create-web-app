@@ -8,7 +8,6 @@
     </div>
 </template>
 <script setup lang="ts">
-import { watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useServerStore } from '@/stores/server.ts';
 
