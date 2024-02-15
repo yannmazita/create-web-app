@@ -25,7 +25,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Misc */
-    "strictNullChecks": true,
+    "strict": true,
   },
   "include": ["./src/**/*.ts", "./src/**/*.tsx", "./src/**/*.vue"],
   "references": [{ "path": "./tsconfig.node.json" }]
