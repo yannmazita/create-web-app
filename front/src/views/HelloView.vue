@@ -1,5 +1,6 @@
 <template>
-    <h1>Hello</h1>
+    <HelloStats />
 </template>
 <script setup lang="ts">
+import HelloStats from '@/components/HelloStats.vue';
 </script>
