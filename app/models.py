@@ -15,6 +15,7 @@ class Token(BaseModel):
 class AppError(BaseModel):
     error: str
 
+
 class AppStats(BaseModel):
     active_users: int
 
@@ -31,16 +32,13 @@ class TokenData(SQLModel):
 
 class UserBase(SQLModel):
     username: str = Field(index=True, unique=True)
-    player_id: UUID | None = Field(default=None, foreign_key="player.id")
 
 
 class User(UserBase, table=True):
     id: UUID | None = Field(default=None, primary_key=True)
     hashed_password: str
     banned: bool = Field(default=False)
-    roles: str = Field(
-        default="user.create user:own user:own.write user:own:player user:own:player.write user:others:player:points user:others:player:playername websockets"
-    )
+    roles: str = Field(default="user.create user:own user:own.write websockets")
 
 
 class UserCreate(UserBase):
