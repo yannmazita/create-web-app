@@ -9,9 +9,9 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import tokens, users, players, websockets
+from .routers import tokens, users, websockets
 from .database import create_db_and_tables
-from .models import create_fake_players, create_fake_users, create_admin_user
+from .models import create_fake_users, create_admin_user
 
 
 ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
@@ -21,7 +21,6 @@ ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     create_admin_user()
-    create_fake_players()
     create_fake_users()
     yield
 

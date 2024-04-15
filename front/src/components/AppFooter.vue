@@ -2,12 +2,12 @@
     <footer class="footer footer-center px-10 py-5 bg-blue-950 text-primary-content sticky top-[100vh]">
         <aside>
             <p class="font-bold">
-                <br /> Hangman, 2024
+                <br /> create-web-app, 2024
             </p>
         </aside>
         <nav>
             <div class="grid grid-flow-col gap-4">
-                <a href="https://github.com/yannmazita/hangman">
+                <a href="https://github.com/yannmazita/create-web-app">
                     <svg width="24px" height="24px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg"
                         xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000" stroke="#000000">
                         <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
