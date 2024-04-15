@@ -1,4 +1,4 @@
-# creat-web-app
+# create-web-app
 
 Scaffholding to create a web application using FastAPI and VueJS.
 
