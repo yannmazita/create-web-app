@@ -4,13 +4,13 @@ import { createPinia } from 'pinia'
 import './style.css'
 import App from '@/App.vue'
 
-import HelloView from '@/views/HelloView.vue'
+import MainView from '@/views/MainView.vue'
 
 const pinia = createPinia()
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: '', component: HelloView },
+        { path: '', component: MainView },
     ]
 })
 

@@ -1,10 +1,9 @@
-from typing import Any
 from uuid import UUID
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 from app.models import (
-    AppError,
     AppStats,
+    AppError,
     WebsocketMessage,
 )
 from app.websockets import Connections
@@ -24,8 +23,7 @@ async def verify_websocket_token(websocket: WebSocket) -> None:
 
     The websocket token is the first message sent by the user.
     It contains the access token and token type. This function verifies
-    the token and closes the websocket if it is invalid.
-
+    the token and closes the websocket if it is invalint
     Args:
         websocket: The websocket to verify.
     """
@@ -89,17 +87,16 @@ async def on_client_disconnect(websocket: WebSocket, client_id: UUID) -> None:
     await client_connections.broadcast(stats_message)
 
 
-async def send_server_stats(id: UUID, connections: Connections) -> None:
+async def send_server_stats(user_id: UUID) -> None:
     """
-    Sends server stats to a websocket connection.
+    Sends server stats to the user.
 
     Args:
-        id: The id of the connection to send the stats to.
-        connections: The object that holds the websocket connections.
+        user_id: The id of the user.
     """
-    stats = AppStats(active_users=connections.get_number_of_connections())
+    stats = AppStats(active_users=user_connections.get_number_of_connections())
     stats_message = WebsocketMessage(action="server_stats", data=stats)
-    await connections.send(id, stats_message)
+    await user_connections.send(user_id, stats_message)
 
 
 async def validate_message(
@@ -143,11 +140,8 @@ async def user_endpoint(websocket: WebSocket, user_id: UUID):
             else:
                 action: str = message.action
 
-                # Implement handling of different actions here.
-                # For example: if action == "start_app": start_app(user_id)
-
                 if action == "server_stats":
-                    await send_server_stats(user_id, user_connections)
+                    await send_server_stats(user_id)
 
     except WebSocketDisconnect:
         await on_user_disconnect(websocket, user_id)
@@ -170,7 +164,13 @@ async def client_endpoint(websocket: WebSocket, client_id: UUID):
                 action: str = message.action
 
                 if action == "server_stats":
-                    await send_server_stats(client_id, client_connections)
+                    stats: AppStats = AppStats(
+                        active_users=client_connections.get_number_of_connections()
+                    )
+                    stats_message: WebsocketMessage = WebsocketMessage(
+                        action="server_stats", data=stats
+                    )
+                    await client_connections.send(client_id, stats_message)
 
     except WebSocketDisconnect:
         await on_client_disconnect(websocket, client_id)
