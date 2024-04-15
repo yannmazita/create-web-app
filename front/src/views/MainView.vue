@@ -1,6 +1,6 @@
 <template>
     <div class="flex flex-col justify-between h-full max-w-full">
-        hello
+        <div class="flex justify-center">hello</div>
         <ServerInfo></ServerInfo>
     </div>
 </template>
