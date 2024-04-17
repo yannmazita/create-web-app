@@ -15,16 +15,18 @@
 import { computed } from 'vue';
 
 interface Props {
+    additionalRows?: string[][];
     keyboardKeys?: string[];
     hiddenKeys?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    keyboardKeys: [
+    additionalRows: () => [],
+    keyboardKeys: () => [
         'A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Q', 'S', 'D',
         'F', 'G', 'H', 'J', 'K', 'L', 'M', '', '', 'W', 'X', 'C', 'V', 'B', 'N', '', '⬅️'
     ],
-    hiddenKeys: [],
+    hiddenKeys: () => [],
 });
 const emit = defineEmits<{
     keyPress: [key: string]
@@ -32,9 +34,7 @@ const emit = defineEmits<{
 
 const keyboardRows = computed(() => {
     const visibleKeys = props.keyboardKeys.filter(key => !props.hiddenKeys.includes(key));
-    const rows = [];
-    rows.push(['-', '_', '.', '@']);
-    rows.push(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
+    const rows = props.additionalRows;
     for (let i = 0; i < Math.ceil(visibleKeys.length / 10); i++) {
         rows.push(visibleKeys.slice(i * 10, (i + 10) * 10));
     }
