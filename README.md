@@ -65,3 +65,8 @@ uvicorn app.main:api --reload
 
 `Typescript`, `Vite`, `VueJS` frontend, served through `NGINX`. NGIX server running as frontend `Docker` service.
 `Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
+
+
+## To dock
+- Secure creation of admin user
+- Secure usage of environment variables
