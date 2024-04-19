@@ -1,33 +1,9 @@
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, Session, SQLModel
 
-from .database import engine
-
-
-class Token(BaseModel):
-    access_token: str | None
-    token_type: str | None
-
-
-class AppError(BaseModel):
-    error: str
-
-
-class AppStats(BaseModel):
-    active_users: int
-
-
-class WebsocketMessage(BaseModel):
-    action: str
-    data: Token | AppError | AppStats | None = None
-
-
-class TokenData(SQLModel):
-    username: str | None = None
-    scopes: list[str] = []
+from app.database import engine
 
 
 class UserBase(SQLModel):
