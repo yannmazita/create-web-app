@@ -1,20 +1,12 @@
 from uuid import UUID
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from pydantic import ValidationError
-from app.models import (
+from app.clients.models import (
     AppStats,
     AppError,
     WebsocketMessage,
 )
-from app.websockets import Connections
-
-router = APIRouter(
-    prefix="/ws",
-    tags=["ws"],
-)
-
-client_connections: Connections = Connections()
-user_connections: Connections = Connections()
+from app.clients.utils import Connections
 
 
 async def verify_websocket_token(websocket: WebSocket) -> None:
@@ -36,7 +28,9 @@ async def verify_websocket_token(websocket: WebSocket) -> None:
         print("Invalid token format.")
 
 
-async def on_user_connect(websocket: WebSocket, user_id: UUID) -> None:
+async def on_user_connect(
+    user_connections: Connections, websocket: WebSocket, user_id: UUID
+) -> None:
     """
     Handles actions when a websocket is connected.
 
@@ -48,7 +42,9 @@ async def on_user_connect(websocket: WebSocket, user_id: UUID) -> None:
     await verify_websocket_token(websocket)
 
 
-async def on_user_disconnect(websocket: WebSocket, user_id: UUID) -> None:
+async def on_user_disconnect(
+    user_connections: Connections, websocket: WebSocket, user_id: UUID
+) -> None:
     """
     Handles actions when a websocket is disconnected.
 
@@ -59,7 +55,9 @@ async def on_user_disconnect(websocket: WebSocket, user_id: UUID) -> None:
     user_connections.disconnect(user_id)
 
 
-async def on_client_connect(websocket: WebSocket, client_id: UUID) -> None:
+async def on_client_connect(
+    client_connections: Connections, websocket: WebSocket, client_id: UUID
+) -> None:
     """
     Handles actions when a websocket is connected.
 
@@ -73,7 +71,9 @@ async def on_client_connect(websocket: WebSocket, client_id: UUID) -> None:
     await client_connections.broadcast(stats_message)
 
 
-async def on_client_disconnect(websocket: WebSocket, client_id: UUID) -> None:
+async def on_client_disconnect(
+    client_connections: Connections, websocket: WebSocket, client_id: UUID
+) -> None:
     """
     Handles actions when a websocket is disconnected.
 
@@ -87,7 +87,7 @@ async def on_client_disconnect(websocket: WebSocket, client_id: UUID) -> None:
     await client_connections.broadcast(stats_message)
 
 
-async def send_server_stats(user_id: UUID) -> None:
+async def send_server_stats(user_connections: Connections, user_id: UUID) -> None:
     """
     Sends server stats to the user.
 
@@ -122,55 +122,3 @@ async def validate_message(
         error_message = WebsocketMessage(action="error", data=error)
         await connections.send(id, error_message)
         return None
-
-
-@router.websocket("/user")
-async def user_endpoint(websocket: WebSocket, user_id: UUID):
-    await websocket.accept()  # Accept the websocket connection
-
-    try:
-        await on_user_connect(websocket, user_id)
-
-        while True:
-            message: WebsocketMessage | None = await validate_message(
-                websocket, user_id, user_connections
-            )
-            if message is None:
-                continue
-            else:
-                action: str = message.action
-
-                if action == "server_stats":
-                    await send_server_stats(user_id)
-
-    except WebSocketDisconnect:
-        await on_user_disconnect(websocket, user_id)
-
-
-@router.websocket("/client")
-async def client_endpoint(websocket: WebSocket, client_id: UUID):
-    await websocket.accept()  # Accept the websocket connection
-
-    try:
-        await on_client_connect(websocket, client_id)
-
-        while True:
-            message: WebsocketMessage | None = await validate_message(
-                websocket, client_id, client_connections
-            )
-            if message is None:
-                continue
-            else:
-                action: str = message.action
-
-                if action == "server_stats":
-                    stats: AppStats = AppStats(
-                        active_users=client_connections.get_number_of_connections()
-                    )
-                    stats_message: WebsocketMessage = WebsocketMessage(
-                        action="server_stats", data=stats
-                    )
-                    await client_connections.send(client_id, stats_message)
-
-    except WebSocketDisconnect:
-        await on_client_disconnect(websocket, client_id)
