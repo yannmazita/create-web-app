@@ -28,7 +28,7 @@ async def user_endpoint(websocket: WebSocket, user_id: UUID):
     await websocket.accept()  # Accept the websocket connection
 
     try:
-        await on_user_connect(websocket, user_id)
+        await on_user_connect(user_connections, websocket, user_id)
 
         while True:
             message: WebsocketMessage | None = await validate_message(
@@ -40,10 +40,10 @@ async def user_endpoint(websocket: WebSocket, user_id: UUID):
                 action: str = message.action
 
                 if action == "server_stats":
-                    await send_server_stats(user_id)
+                    await send_server_stats(user_connections, user_id)
 
     except WebSocketDisconnect:
-        await on_user_disconnect(websocket, user_id)
+        await on_user_disconnect(user_connections, websocket, user_id)
 
 
 @router.websocket("/client")
@@ -51,7 +51,7 @@ async def client_endpoint(websocket: WebSocket, client_id: UUID):
     await websocket.accept()  # Accept the websocket connection
 
     try:
-        await on_client_connect(websocket, client_id)
+        await on_client_connect(client_connections, websocket, client_id)
 
         while True:
             message: WebsocketMessage | None = await validate_message(
@@ -72,4 +72,4 @@ async def client_endpoint(websocket: WebSocket, client_id: UUID):
                     await client_connections.send(client_id, stats_message)
 
     except WebSocketDisconnect:
-        await on_client_disconnect(websocket, client_id)
+        await on_client_disconnect(client_connections, websocket, client_id)
