@@ -67,6 +67,7 @@ uvicorn app.main:api --reload
 `Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
 
 
-## To dock
+## To do
+- Store user/client connections to database instead of Python lists
 - Secure creation of admin user
 - Secure usage of environment variables
