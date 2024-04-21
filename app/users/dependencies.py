@@ -1,5 +1,5 @@
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import Depends, HTTPException, Query, Security, status
 from sqlalchemy.exc import NoResultFound
@@ -60,7 +60,7 @@ async def create_new_user(
         except NoResultFound:
             pass
     hashed_password: str = get_password_hash(user.password)
-    new_user = User(username=user.username, hashed_password=hashed_password)
+    new_user = User(id=uuid4(), username=user.username, hashed_password=hashed_password)
     db_user = User.model_validate(new_user)
     with Session(engine) as session:
         session.add(db_user)
