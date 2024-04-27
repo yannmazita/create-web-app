@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth import router as auth_routes
 from app.clients import router as client_routes
 from app.users import router as user_routes
-from app.users.utils import create_fake_users, create_admin_user
-from .database import create_db_and_tables
+from app.users.utils import create_superuser
+from app.database import create_db_and_tables
 
 
 ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
@@ -22,8 +22,7 @@ ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    create_admin_user()
-    create_fake_users()
+    create_superuser()
     yield
 
 
@@ -37,8 +36,8 @@ api.add_middleware(
     allow_headers=["*"],
 )
 api.include_router(auth_routes.router)
-api.include_router(user_routes.router)
 api.include_router(client_routes.router)
+api.include_router(user_routes.router)
 
 
 def start_server():
