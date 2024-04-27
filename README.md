@@ -68,6 +68,4 @@ uvicorn app.main:api --reload
 
 
 ## To do
-- Store user/client connections to database instead of Python lists
-- Secure creation of admin user
-- Secure usage of environment variables
+- Frontend: Admin dashboard
