@@ -13,46 +13,18 @@ async def verify_websocket_token(websocket: WebSocket) -> None:
     """
     Verifies the websocket token.
 
-    The websocket token is the first message sent by the user.
+    The websocket token is the first message sent by the client.
     It contains the access token and token type. This function verifies
     the token and closes the websocket if it is invalint
     Args:
         websocket: The websocket to verify.
     """
-
     try:
         # do things to actually verify the token
         pass
     except ValidationError:
         await websocket.close()
         print("Invalid token format.")
-
-
-async def on_user_connect(
-    user_connections: Connections, websocket: WebSocket, user_id: UUID
-) -> None:
-    """
-    Handles actions when a websocket is connected.
-
-    Args:
-        websocket: The websocket to connect.
-        user_id: The id of the user.
-    """
-    user_connections.connect(websocket, user_id)
-    await verify_websocket_token(websocket)
-
-
-async def on_user_disconnect(
-    user_connections: Connections, websocket: WebSocket, user_id: UUID
-) -> None:
-    """
-    Handles actions when a websocket is disconnected.
-
-    Args:
-        websocket: The websocket to disconnect.
-        user_id: The id of the user.
-    """
-    user_connections.disconnect(user_id)
 
 
 async def on_client_connect(
