@@ -5,5 +5,14 @@
     </div>
 </template>
 <script setup lang="ts">
+import { useMenuStore } from '@/stores/menu.ts';
+import { onMounted } from 'vue'
+import { PageType } from '@/enums.ts';
 import ServerInfo from '@/components/BaseServerInfo.vue'
+
+const menuStore = useMenuStore();
+
+onMounted(() => {
+    menuStore.setCurrentPage(PageType.HOME);
+});
 </script>

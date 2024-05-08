@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
-import { useUserStore } from '@/stores/user.ts';
+import { useClientStore } from '@/stores/client.ts';
 import { ServerStats } from '@/interfaces.ts';
 
 export const useAppStore = defineStore('app', () => {
     const serverStats: ServerStats = reactive({
         active_users: 0,
     });
-    const userStore = useUserStore();
+    const clientStore = useClientStore();
 
     async function getServerStats() {
-        userStore.sendSocketMessage(JSON.stringify({
+        clientStore.sendSocketMessage(JSON.stringify({
             action: 'server_stats',
         }));
     };
