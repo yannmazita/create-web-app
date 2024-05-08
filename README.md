@@ -70,6 +70,7 @@ uvicorn app.main:api --reload
 ## To do
 - Update README pictures
 - Backend: Enhance OpenAPI documentation
-- Backend: Refactor client (websocket) package
+- Backend: Set up PostgreSQL container
+- Backend: Use KeyDB/Valkey/DynamoDB to store websocket connections
 - Frontend: Enhance error/loading handling when accessing backend
 - More efficient use of environment variables on the backend
