@@ -68,4 +68,8 @@ uvicorn app.main:api --reload
 
 
 ## To do
-- Frontend: Admin dashboard
+- Update README pictures
+- Backend: Enhance OpenAPI documentation
+- Backend: Refactor client (websocket) package
+- Frontend: Enhance error/loading handling when accessing backend
+- More efficient use of environment variables on the backend
