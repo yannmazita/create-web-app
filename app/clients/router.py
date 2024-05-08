@@ -6,12 +6,9 @@ from app.clients.models import (
 )
 from app.clients.utils import Connections
 from app.clients.services import (
-    on_user_connect,
-    on_user_disconnect,
     on_client_connect,
     on_client_disconnect,
     validate_message,
-    send_server_stats,
 )
 
 router = APIRouter(
@@ -21,29 +18,6 @@ router = APIRouter(
 
 client_connections: Connections = Connections()
 user_connections: Connections = Connections()
-
-
-@router.websocket("/user")
-async def user_endpoint(websocket: WebSocket, user_id: UUID):
-    await websocket.accept()  # Accept the websocket connection
-
-    try:
-        await on_user_connect(user_connections, websocket, user_id)
-
-        while True:
-            message: WebsocketMessage | None = await validate_message(
-                websocket, user_id, user_connections
-            )
-            if message is None:
-                continue
-            else:
-                action: str = message.action
-
-                if action == "server_stats":
-                    await send_server_stats(user_connections, user_id)
-
-    except WebSocketDisconnect:
-        await on_user_disconnect(user_connections, websocket, user_id)
 
 
 @router.websocket("/client")
