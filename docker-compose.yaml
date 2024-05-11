@@ -1,5 +1,3 @@
-version: '3'
-
 x-postgres-base: &postgres-base
   image: postgis/postgis:15-3.3-alpine
   restart: always
@@ -13,13 +11,10 @@ x-postgres-base: &postgres-base
 
 x-backend-base: &backend-base
   build:
-    context: ./
-    dockerfile: app/Dockerfile
+    context: ./app
   restart: always
 
 x-frontend-base: &frontend-base
-  build:
-    context: ./
   restart: always
 
 services:
@@ -52,10 +47,13 @@ services:
       - pgdata-prod:/var/lib/postgresql/data
     networks:
       - prod
+
   backend-dev:
     profiles: ["dev"]
     <<: *backend-base
-    command: ["python", "-m", "app.main"]
+    build:
+      context: ./app
+      target: builder
     env_file: "./.env"
     environment:
       - POSTGRES_HOST=postgres-dev
@@ -73,7 +71,11 @@ services:
   backend-prod:
     profiles: ["prod"]
     <<: *backend-base
-    command: ["python", "-m", "app.main"]
+    build:
+      context: ./app
+      target: production
+      args:
+        BUILD_PRODUCTION: "true"
     env_file: "./.env"
     environment:
       - POSTGRES_HOST=postgres-prod
@@ -86,13 +88,15 @@ services:
         condition: service_healthy
     networks:
       - prod
+
   frontend-dev:
     profiles: ["dev"]
     <<: *frontend-base
-    command: ["npm", "run", "dev"]
+    build:
+      context: ./front
+      target: builder
+    command: npm run host
     env_file: "./.env"
-    volumes:
-      - ./front:/application
     ports:
       - 5173:5173
     expose:
@@ -103,7 +107,10 @@ services:
     profiles: ["prod"]
     <<: *frontend-base
     build:
-      dockerfile: front/Dockerfile
+      context: ./front
+      target: production
+      args:
+        BUILD_PRODUCTION: "true"
     env_file: "./.env"
     ports:
       - 80:80

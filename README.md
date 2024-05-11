@@ -2,75 +2,43 @@
 
 Scaffholding to create a web application using FastAPI and VueJS.
 
-## Installing
-
-If you only plan on running the Docker containers you can directly jump to [Running using Docker](#using-docker).
-
-### User interface
-
-The user interface can be installed using `npm`. Inside the `front` directory run:
-```commandline
-npm install
-```
-### Application server
-
-Dependencies are defined in `pyproject.toml` and `requirements.txt`.
-The application server can be installed in a virtual environment. For example using Poetry and in the project root:
-```commandline
-poetry install
-```
-
 ## Running
+The frontend, the backend and the database live in Docker containers. Utility scripts can be found in the `scripts` directory.
 
-### Using Docker
-Both frontend and backend are dockerized. To start them, run in the project directory:
+To start the development environment, run from the project root:
+
 ```commandline
-docker compose up -d [--build]
-```
-or
-```commandline
-docker compose run -d [--build] <frontend | backend>
-```
-The application is served to `localhost:5173` .
-
-### From source
-
-#### Environment
-Create a `.env` file at the root of the cloned repository. See `.env.example` for an example.
-The `ALGORITHM` and `SECRET_KEY` keys are used to sign JWT tokens.
-Change the value of `SECRET_KEY` to a randomly generated key using for example:
-```commandline
-openssl rand -hex 32
-```
-`ORIGINS` and `VITE_API_URL` keys define respectively the URLs where the user interface and the API are accessible.
-
-#### User interface
-
-Start the vite development server using:
-```commandline
-npm run dev
+bash ./scripts/run-dev.sh [--options]
 ```
 
-#### Application server
-Activate the virtual environment where the server is installed. For example using Poetry and in the project root:
+To start the production environment, run from the project root:
+
 ```commandline
-poetry shell
+bash ./scripts/run-prod.sh [--options]
 ```
-Then run:
+
+The frontend is served to `localhost:5173` in dev and `localhost:80` in prod.
+The backend is served to `localhost:8000` in both environments, currently.
+
+You can specify Docker options like `--build`.
+Services can also be started individually with :
+
 ```commandline
-uvicorn app.main:api --reload
+docker compose run -d [--options] [docker-service]
 ```
+
+However backend services depend on database services, starting the former will start up the latter.
 
 ## Details
 
-`Typescript`, `Vite`, `VueJS` frontend, served through `NGINX`. NGIX server running as frontend `Docker` service.
-`Python`, `FastAPI` backend, served through `uvicorn`. Uvicorn server running as backend Docker service.
+- The database lives in a `Postgresql` container.
+- `Python` backend using `FastAPI` and several other utilities like `SQLModel`, `SQLAlchemy` and `Pydantic`. The backend is served using `uvicorn`.
+- `VueJS/Typescript` frontend using `vite`. In the development environment the frontend is served using vite, in production `NGINX` is used.
+
 
 
 ## To do
-- Update README pictures
+- Update README with pictures
 - Backend: Enhance OpenAPI documentation
-- Backend: Set up PostgreSQL container
 - Backend: Use KeyDB/Valkey/DynamoDB to store websocket connections
 - Frontend: Enhance error/loading handling when accessing backend
-- More efficient use of environment variables on the backend
