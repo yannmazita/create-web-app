@@ -3,6 +3,11 @@
 Scaffholding to create a web application using FastAPI and VueJS.
 
 ## Running
+
+
+<details>
+    <summary>Basic commands</summary>
+
 The frontend, the backend and the database live in Docker containers. Utility scripts can be found in the `scripts` directory.
 
 To start the development environment, run from the project root:
@@ -17,17 +22,40 @@ To start the production environment, run from the project root:
 bash ./scripts/run-prod.sh [--options]
 ```
 
-The frontend is served to `localhost:5173` in dev and `localhost:80` in prod.
-The backend is served to `localhost:8000` in both environments, currently.
-
 You can specify Docker options like `--build`.
 Services can also be started individually with :
 
 ```commandline
-docker compose up -d [--options] [docker-service]
+docker compose up [-d] [--options] <docker-service>
 ```
+</details>
+
+The frontend is served to `localhost:5173` in dev and `localhost:80` in prod.
+The backend is served to `localhost:8000` in both environments, currently.
+
 
 However backend services depend on database services, starting the former will start up the latter.
+
+
+## Infrastructure
+
+<details>
+    <summary>How do the docker services look like?</summary>
+
+Two environments (docker profiles) are currently set up, `dev` and `prod`.
+
+Services are setup following this naming scheme :
+- `postgres-[profile]`
+- `backend-[profile]`
+- `frontend-[profile]`
+
+For example, to run the frontend with `dev` profile :
+
+```commandline
+docker compose up [-d] [--options] frontend-dev
+```
+</details>
+
 
 ## Details
 
