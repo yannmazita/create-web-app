@@ -24,7 +24,7 @@ You can specify Docker options like `--build`.
 Services can also be started individually with :
 
 ```commandline
-docker compose run -d [--options] [docker-service]
+docker compose up -d [--options] [docker-service]
 ```
 
 However backend services depend on database services, starting the former will start up the latter.

@@ -30,7 +30,7 @@ RUN if [ "$BUILD_PRODUCTION" = "true" ]; then npm run build; fi
 FROM nginx:alpine as production
 COPY nginx.conf /etc/nginx/nginx.conf
 RUN rm -rf /usr/share/nginx/html/*
-COPY --from=builder /application/front/dist /usr/share/nginx/html/front
+COPY --from=builder /application/dist /usr/share/nginx/html/front
 EXPOSE 5173
 
 CMD ["nginx", "-g", "daemon off;"]
