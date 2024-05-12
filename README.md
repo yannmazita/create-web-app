@@ -26,7 +26,7 @@ You can specify Docker options like `--build`.
 Services can also be started individually with :
 
 ```commandline
-docker compose up [-d] [--options] <docker-service>
+docker compose up [--options] <docker-service>
 ```
 </details>
 
@@ -49,10 +49,10 @@ Services are setup following this naming scheme :
 - `backend-[profile]`
 - `frontend-[profile]`
 
-For example, to run the frontend with `dev` profile :
+For example, to build and spin up the frontend service with `dev` profile in detached mode :
 
 ```commandline
-docker compose up [-d] [--options] frontend-dev
+docker compose up -d --build frontend-dev
 ```
 </details>
 
