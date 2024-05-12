@@ -27,7 +27,7 @@ def create_superuser():
 def create_fake_users():
     session: Session = Session(engine)
     service = UserService(session)
-    for i in range(150):
+    for i in range(40):
         user: UserCreate = UserCreate(
             username=f"fake_user_{i}",
             password="secret",
