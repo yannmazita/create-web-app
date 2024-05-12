@@ -1,4 +1,3 @@
-import os
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -6,12 +5,10 @@ from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import JWTError, jwt
 from pydantic import ValidationError
 
-from app.dependencies import get_user_by_username
 from app.auth.config import OAUTH_SCOPES
 from app.auth.models import TokenData
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+from app.config import settings
+from app.dependencies import get_user_by_username
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="login",
@@ -47,7 +44,7 @@ async def validate_token(
     )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         username = payload.get("sub")
         if username is None:
             raise credentials_exception

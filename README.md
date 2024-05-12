@@ -54,6 +54,8 @@ For example, to build and spin up the frontend service with `dev` profile in det
 ```commandline
 docker compose up -d --build frontend-dev
 ```
+
+Attention: when directly spinning up backend services you have to copy `pyproject.toml` and `poetry.lock` to the `app` directory.
 </details>
 
 
@@ -69,4 +71,5 @@ docker compose up -d --build frontend-dev
 - Update README with pictures
 - Backend: Enhance OpenAPI documentation
 - Backend: Use KeyDB/Valkey/DynamoDB to store websocket connections
+- DB: Manage migrations with Alembic
 - Frontend: Enhance error/loading handling when accessing backend

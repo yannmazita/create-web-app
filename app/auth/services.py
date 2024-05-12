@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 
 from passlib.context import CryptContext
@@ -6,14 +5,11 @@ from jose import jwt
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
+from app.config import settings
 from app.auth.exceptions import incorrect_username_or_password
 from app.database import engine
 from app.users.exceptions import user_not_found
 from app.users.models import User
-
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -44,5 +40,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # type: ignore
+    encoded_jwt = jwt.encode(
+        to_encode, settings.secret_key, algorithm=settings.algorithm
+    )
     return encoded_jwt

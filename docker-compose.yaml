@@ -19,7 +19,7 @@ x-frontend-base: &frontend-base
 
 services:
   postgres-dev:
-    profiles: ["devv"]
+    profiles: ["dev"]
     <<: *postgres-base
     env_file: "./.env"
     environment:
@@ -56,17 +56,17 @@ services:
       target: builder
     command: /.poetry-venv/bin/poetry run python -m app.main
     env_file: "./.env"
-#   environment:
-#     - POSTGRES_HOST=postgres-dev
-#    volumes:
-#      - ./app:/application
+    environment:
+     - POSTGRES_HOST=postgres-dev
+    volumes:
+      - ./app:/application
     ports:
       - 8000:8000
     expose:
       - 8000
-#    depends_on:
-#      postgres-dev:
-#        condition: service_healthy
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
     networks:
       - dev
   backend-prod:
