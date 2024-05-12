@@ -1,9 +1,14 @@
-from fastapi import HTTPException, status
-from sqlmodel import Session, select
-from sqlalchemy.exc import NoResultFound
+from typing import Annotated
 
-from app.database import engine
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Session, select
+
+from app.database import get_session
 from app.users.models import User
+
+DBSessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 async def get_user_by_username(username: str) -> User:
