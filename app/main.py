@@ -15,8 +15,8 @@ from app.users.utils import create_fake_users, create_superuser
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_db_and_tables()
-    create_superuser()
-    create_fake_users()
+    await create_superuser()
+    await create_fake_users()
     yield
     if sessionmanager._engine is not None:
         await sessionmanager.close()

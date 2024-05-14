@@ -1,12 +1,15 @@
 from uuid import uuid4
-from sqlmodel import Session, select, func
-from sqlalchemy.exc import MultipleResultsFound, NoResultFound
+
+from sqlalchemy.exc import IntegrityError, MultipleResultsFound, NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import func, select
+
 from app.auth.exceptions import incorrect_password
-from app.auth.services import get_password_hash, verify_password
+from app.auth.utils import get_password_hash, verify_password
 from app.users.exceptions import (
-    user_not_found,
     multiple_users_found,
     user_already_exists,
+    user_not_found,
 )
 from app.users.models import (
     User,
@@ -26,10 +29,10 @@ class UserServiceBase:
         session: The database session to be used for operations.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def create_user(self, user: UserCreate) -> User:
+    async def create_user(self, user: UserCreate) -> User:
         """
         Create a new user.
         Args:
@@ -38,7 +41,8 @@ class UserServiceBase:
             The created user.
         """
         try:
-            self.session.exec(select(User).where(User.username == user.username)).one()
+            query = select(User).where(User.username == user.username)
+            response = await self.session.execute(query)
             raise user_already_exists
         except NoResultFound:
             pass
@@ -48,13 +52,16 @@ class UserServiceBase:
             id=uuid4(), username=user.username, hashed_password=hashed_password
         )
         db_user = User.model_validate(new_user)
-        self.session.add(db_user)
-        self.session.commit()
-        self.session.refresh(db_user)
+        try:
+            self.session.add(db_user)
+            await self.session.commit()
+            await self.session.refresh(db_user)
+        except IntegrityError as e:
+            raise e
 
         return db_user
 
-    def get_user_by_attribute(self, attribute: UserAttribute, value: str) -> User:
+    async def get_user_by_attribute(self, attribute: UserAttribute, value: str) -> User:
         """
         Get a user by a specified attribute.
         Args:
@@ -64,16 +71,15 @@ class UserServiceBase:
             The user with the specified attribute and value.
         """
         try:
-            user = self.session.exec(
-                select(User).where(getattr(User, attribute.value) == value)
-            ).one()
+            query = select(User).where(getattr(User, attribute.value) == value)
+            response = await self.session.execute(query)
         except MultipleResultsFound:
             raise multiple_users_found
         except NoResultFound:
             raise user_not_found
-        return user
+        return response.scalar_one()
 
-    def update_user_by_attribute(
+    async def update_user_by_attribute(
         self, attribute: UserAttribute, value: str, user: UserCreate
     ) -> User:
         """
@@ -86,20 +92,21 @@ class UserServiceBase:
             The updated user.
         """
         try:
-            user_db = self.get_user_by_attribute(attribute, value)
+            user_db = await self.get_user_by_attribute(attribute, value)
             user_data = user.model_dump()
             for key, value in user_data.items():
                 setattr(user_db, key, value)
             self.session.add(user_db)
-            self.session.commit()
-            self.session.refresh(user_db)
-            return user_db
+            await self.session.commit()
+            await self.session.refresh(user_db)
         except NoResultFound:
             raise user_not_found
         except MultipleResultsFound:
             raise multiple_users_found
 
-    def delete_user(self, user: User) -> User:
+        return user_db
+
+    async def delete_user(self, user: User) -> User:
         """
         Delete a user.
         Args:
@@ -108,13 +115,16 @@ class UserServiceBase:
             The deleted user.
         """
         try:
-            self.session.delete(user)
-            self.session.commit()
+            await self.session.delete(user)
+            await self.session.commit()
         except NoResultFound:
             raise user_not_found
+
         return user
 
-    def delete_user_by_attribute(self, attribute: UserAttribute, value: str) -> User:
+    async def delete_user_by_attribute(
+        self, attribute: UserAttribute, value: str
+    ) -> User:
         """
         Delete a user using a specified attribute.
         Args:
@@ -124,16 +134,17 @@ class UserServiceBase:
             The deleted user.
         """
         try:
-            user = self.get_user_by_attribute(attribute, value)
-            self.session.delete(user)
-            self.session.commit()
-            return user
+            user = await self.get_user_by_attribute(attribute, value)
+            await self.session.delete(user)
+            await self.session.commit()
         except NoResultFound:
             raise user_not_found
         except MultipleResultsFound:
             raise multiple_users_found
 
-    def get_users(self, offset: int = 0, limit: int = 100):
+        return user
+
+    async def get_users(self, offset: int = 0, limit: int = 100):
         """
         Get all users.
         Args:
@@ -142,9 +153,16 @@ class UserServiceBase:
         Returns:
             The list of users.
         """
-        total_count_statement = select(func.count()).select_from(User)
-        total_count: int = self.session.exec(total_count_statement).one()
-        users = self.session.exec(select(User).offset(offset).limit(limit)).all()
+        total_count_query = select(func.count()).select_from(User)
+        total_count_response = await self.session.execute(total_count_query)
+        total_count: int = total_count_response.scalar_one()
+
+        try:
+            users_query = select(User).offset(offset).limit(limit)
+            users_response = await self.session.execute(users_query)
+            users = users_response.scalars().all()
+        except NoResultFound:
+            raise user_not_found
         return users, total_count
 
 
@@ -155,10 +173,10 @@ class UserService(UserServiceBase):
         session: The database session to be used for operations.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    def update_user_password(
+    async def update_user_password(
         self, user: User, password_data: UserPasswordUpdate
     ) -> None:
         """
@@ -172,7 +190,7 @@ class UserService(UserServiceBase):
         else:
             user.hashed_password = get_password_hash(password_data.new_password)
             self.session.add(user)
-            self.session.commit()
+            await self.session.commit()
 
 
 class UserAdminService(UserServiceBase):
@@ -182,10 +200,10 @@ class UserAdminService(UserServiceBase):
         session: The database session to be used for operations.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         super().__init__(session)
 
-    def update_user_username_by_attribute(
+    async def update_user_username_by_attribute(
         self, attribute: UserAttribute, value: str, new_username: UserUsernameUpdate
     ) -> User:
         """
@@ -198,18 +216,18 @@ class UserAdminService(UserServiceBase):
             The updated user.
         """
         try:
-            user = self.get_user_by_attribute(attribute, value)
+            user = await self.get_user_by_attribute(attribute, value)
             user.username = new_username.username
             self.session.add(user)
-            self.session.commit()
-            self.session.refresh(user)
+            await self.session.commit()
+            await self.session.refresh(user)
             return user
         except NoResultFound:
             raise user_not_found
         except MultipleResultsFound:
             raise multiple_users_found
 
-    def update_user_roles_by_attribute(
+    async def update_user_roles_by_attribute(
         self, attribute: UserAttribute, value: str, new_roles: UserRolesUpdate
     ) -> User:
         """
@@ -222,11 +240,11 @@ class UserAdminService(UserServiceBase):
             The updated user.
         """
         try:
-            user = self.get_user_by_attribute(attribute, value)
+            user = await self.get_user_by_attribute(attribute, value)
             user.roles = new_roles.roles
             self.session.add(user)
-            self.session.commit()
-            self.session.refresh(user)
+            await self.session.commit()
+            await self.session.refresh(user)
             return user
         except NoResultFound:
             raise user_not_found
