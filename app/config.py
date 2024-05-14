@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     postgres_db: str
     postgres_host: str
     postgres_port: str | int
-    postgres_echo: str
+    postgres_echo: bool
     postgres_pool_size: int
 
 
