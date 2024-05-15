@@ -58,8 +58,6 @@ services:
     env_file: "./.env"
     environment:
      - POSTGRES_HOST=postgres-dev
-    volumes:
-      - ./app:/application
     ports:
       - 8000:8000
     expose:
@@ -67,6 +65,8 @@ services:
     depends_on:
       postgres-dev:
         condition: service_healthy
+    volumes:
+      - ./app:/application
     networks:
       - dev
   backend-prod:
@@ -117,6 +117,8 @@ services:
       - 80:80
     expose:
       - 80
+    volumes:
+      - ./front:/application
     networks:
       - prod
 
