@@ -70,7 +70,7 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
  - FastAPI backend
  - Asynchronous database interface using `asyncio` and `asyncpg`
  - Administration dashboard
- - Responsive VueJS frontend
+ - Responsive Vue3 frontend
  - Type safety with Typescript and Python type hints.
 
 <details>
@@ -78,7 +78,7 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
 
 - The database lives in a `Postgresql` container.
 - `Python` backend using `FastAPI` and several other utilities like `SQLModel`, `SQLAlchemy` and `Pydantic`. The backend is served using `uvicorn`.
-- `VueJS/Typescript` frontend using `vite`. In the development environment the frontend is served using vite, in production `NGINX` is used.
+- `Vue3/Typescript` frontend using `vite`. In the development environment the frontend is served using vite, in production `NGINX` is used.
 </details>
 
 ## To do
