@@ -2,6 +2,9 @@
 
 Scaffholding to create a web application using FastAPI and VueJS.
 
+[video-demonstration.webm](https://github.com/yannmazita/create-web-app/assets/83191036/b148226c-53aa-487c-bf34-32d55edaf0ee)
+
+
 ## Running
 
 
