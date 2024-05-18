@@ -69,6 +69,9 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
  - PostgreSQL database
  - FastAPI backend
  - Asynchronous database interface using `asyncio` and `asyncpg`
+ - User login with `JWT` access tokens
+ - User roles
+ - Securised routes using `OAuth2` scopes.
  - Websocket route for server information
  - Administration dashboard
  - Responsive Vue3 frontend
