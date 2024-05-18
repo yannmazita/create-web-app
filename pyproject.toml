@@ -18,6 +18,8 @@ passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-dotenv = "^1.0.0"
 sqlmodel = "^0.0.14"
 requests = "^2.31.0"
+pydantic-settings = "^2.2.1"
+asyncpg = "^0.29.0"
 
 [build-system]
 requires = ["poetry-core"]

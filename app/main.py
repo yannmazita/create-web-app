@@ -1,37 +1,38 @@
-import os
-import json
+import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
-from dotenv import load_dotenv
-
-load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import router as auth_routes
 from app.clients import router as client_routes
+from app.config import settings
+from app.database import create_db_and_tables, sessionmanager
 from app.users import router as user_routes
-from app.users.utils import create_superuser, create_fake_users
-from app.database import create_db_and_tables
+from app.users.utils import create_fake_users, create_superuser
 
-
-ORIGINS: list = json.loads(os.getenv("ORIGINS"))  # type: ignore
+logging.basicConfig(level=logging.DEBUG)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    create_superuser()
-    create_fake_users()
+    try:
+        await create_db_and_tables()
+        await create_superuser()
+        await create_fake_users()
+    except Exception as e:
+        logging.error(f"Error during startup: {e}", exc_info=False)
     yield
+    if sessionmanager._engine is not None:
+        await sessionmanager.close()
 
 
 api = FastAPI(lifespan=lifespan)
 
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS,
+    allow_origins=settings.origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,8 +45,8 @@ api.include_router(user_routes.router)
 def start_server():
     uvicorn.run(
         "app.main:api",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.app_host,
+        port=int(settings.app_port),
         log_level="info",
     )
     # when reload=true, the 1st argument the location of main as module and a string
