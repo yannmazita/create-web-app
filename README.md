@@ -69,6 +69,7 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
  - PostgreSQL database
  - FastAPI backend
  - Asynchronous database interface using `asyncio` and `asyncpg`
+ - Websocket route for server information
  - Administration dashboard
  - Responsive Vue3 frontend
  - Type safety with Typescript and Python type hints.
