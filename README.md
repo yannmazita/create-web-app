@@ -62,13 +62,24 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
 </details>
 
 
-## Details
+## Features
+ - Separate development and production services
+ - Seperate development and production networks
+ - Quick and easy spin up
+ - PostgreSQL database
+ - FastAPI backend
+ - Asynchronous database interface using `asyncio` and `asyncpg`
+ - Administration dashboard
+ - Responsive VueJS frontend
+ - Type safety with Typescript and Python type hints.
+
+<details>
+    <summary>More detail</summary>
 
 - The database lives in a `Postgresql` container.
 - `Python` backend using `FastAPI` and several other utilities like `SQLModel`, `SQLAlchemy` and `Pydantic`. The backend is served using `uvicorn`.
 - `VueJS/Typescript` frontend using `vite`. In the development environment the frontend is served using vite, in production `NGINX` is used.
-
-
+</details>
 
 ## To do
 - Update README with pictures
