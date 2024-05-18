@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -11,12 +12,17 @@ from app.database import create_db_and_tables, sessionmanager
 from app.users import router as user_routes
 from app.users.utils import create_fake_users, create_superuser
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_db_and_tables()
-    await create_superuser()
-    await create_fake_users()
+    try:
+        await create_db_and_tables()
+        await create_superuser()
+        await create_fake_users()
+    except Exception as e:
+        logging.error(f"Error during startup: {e}", exc_info=False)
     yield
     if sessionmanager._engine is not None:
         await sessionmanager.close()
