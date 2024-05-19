@@ -48,6 +48,7 @@ def start_server():
         host=settings.app_host,
         port=int(settings.app_port),
         log_level="info",
+        reload=True,
     )
     # when reload=true, the 1st argument the location of main as module and a string
     # ie: "app.main:api"
