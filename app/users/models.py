@@ -2,16 +2,17 @@ from uuid import UUID
 from pydantic import validate_call
 from sqlmodel import Field, SQLModel
 from app.auth.config import OAUTH_SCOPES
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
 
-class UserBase(SQLModel):
+class UserBase(AsyncAttrs, SQLModel):
     username: str = Field(index=True, unique=True)
 
 
 class User(UserBase, table=True):
     id: UUID | None = Field(default=None, primary_key=True)
     hashed_password: str
-    roles: str = Field(default="user.create user:own user:own.write websockets")
+    roles: str = Field(default="")
 
 
 class UserCreate(UserBase):

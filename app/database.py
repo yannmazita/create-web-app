@@ -1,13 +1,13 @@
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 
-from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+from sqlmodel import SQLModel
 
 from app.config import settings
 
@@ -25,7 +25,9 @@ ASYNC_POSTGRES_URL: str = (
 class DatabaseSessionManager:
     def __init__(self, host: str, engine_kwargs: dict[str, Any] = {}):
         self._engine = create_async_engine(host, **engine_kwargs)
-        self._sessionmaker = async_sessionmaker(autocommit=False, bind=self._engine)
+        self._sessionmaker = async_sessionmaker(
+            autocommit=False, bind=self._engine, expire_on_commit=False
+        )
 
     async def close(self):
         if self._engine is None:

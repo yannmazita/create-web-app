@@ -139,7 +139,7 @@ class UserServiceBase:
             user_db = await self.get_user_by_attribute(attribute, value)
             user_data = user.model_dump()
             for key, value in user_data.items():
-                if key != id:
+                if key != "id":
                     setattr(user_db, key, value)
             self.session.add(user_db)
             await self.session.commit()
