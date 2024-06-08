@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth import router as auth_routes
 from app.clients import router as client_routes
 from app.config import settings
-from app.database import create_db_and_tables, sessionmanager
+from app.database import sessionmanager, create_db_and_tables
 from app.users import router as user_routes
 from app.users.utils import create_fake_users, create_superuser
 
@@ -50,8 +50,6 @@ def start_server():
         log_level="info",
         reload=True,
     )
-    # when reload=true, the 1st argument the location of main as module and a string
-    # ie: "app.main:api"
 
 
 if __name__ == "__main__":
