@@ -25,8 +25,8 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_encode: dict = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
