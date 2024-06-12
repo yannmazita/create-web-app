@@ -158,3 +158,13 @@ class DatabaseRepository(Generic[Model]):
         if expressions:
             query = query.where(*expressions)
         return list(await self.session.scalars(query))
+
+    async def filter_one(
+        self,
+        *expressions: BinaryExpression,
+    ) -> Model:
+        query = select(self.model)
+        if expressions:
+            query = query.where(*expressions)
+        response = await self.session.execute(query)
+        return response.scalar_one()
