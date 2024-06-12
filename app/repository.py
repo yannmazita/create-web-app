@@ -2,7 +2,7 @@ import logging
 from uuid import UUID
 from typing import Generic, TypeVar
 
-from sqlalchemy import BinaryExpression, select
+from sqlalchemy import BinaryExpression, Sequence, func, select
 from sqlalchemy.exc import (
     IntegrityError,
     MultipleResultsFound,
@@ -102,18 +102,18 @@ class DatabaseRepository(Generic[Model]):
         """
         try:
             logger.debug(f"Updating {self.model.__name__} with id {id}")
-            user_db = await self.get(id)
+            instance = await self.get(id)
             for key, value in data.items():
                 if key != "id":
-                    setattr(user_db, key, value)
+                    setattr(instance, key, value)
             logger.debug(f"Adding {self.model.__name__} to session")
-            self.session.add(user_db)
+            self.session.add(instance)
             logger.debug("Committing session")
             await self.session.commit()
             logger.debug(f"Refreshing {self.model.__name__} instance")
-            await self.session.refresh(user_db)
+            await self.session.refresh(instance)
             logger.info(f"Updated {self.model.__name__} with id {id}")
-            return user_db
+            return instance
         except NoResultFound as e:
             logger.error("No result found.", exc_info=False)
             raise e
@@ -130,13 +130,13 @@ class DatabaseRepository(Generic[Model]):
     async def delete(self, id: UUID) -> Model:
         try:
             logger.debug(f"Deleting {self.model.__name__} with id {id}")
-            user_db = await self.get(id)
+            instance = await self.get(id)
             logger.debug(f"Deleting {self.model.__name__} from session")
-            await self.session.delete(user_db)
+            await self.session.delete(instance)
             logger.debug("Committing session")
             await self.session.commit()
             logger.info(f"Deleted {self.model.__name__} with id {id}")
-            return user_db
+            return instance
         except NoResultFound as e:
             logger.error("No result found.", exc_info=False)
             raise e
@@ -148,6 +148,38 @@ class DatabaseRepository(Generic[Model]):
             raise e
         except Exception as e:
             logger.error("Unexpected error occurred.", exc_info=False)
+            raise e
+
+    async def all(self, offset: int = 0, limit: int = 100):
+        """
+        Get all instances of the model from the database.
+        Args:
+            offset: The number of instances to skip.
+            limit: The maximum number of instances to return.
+        Returns:
+            The list of instances and the total count.
+        """
+        try:
+            logger.debug(
+                f"Fetching {limit} {self.model.__name__} instances from {offset}"
+            )
+            total_count_query = select(func.count()).select_from(self.model)
+            total_count_response = await self.session.execute(total_count_query)
+            total_count: int = total_count_response.scalar_one()
+
+            query = select(self.model).offset(offset).limit(limit)
+            response = await self.session.execute(query)
+            instances = response.scalars().all()
+            logger.info(f"Fetched {len(instances)} instances")
+            return instances, total_count
+        except NoResultFound as e:
+            logger.error("No result found", exc_info=False)
+            raise e
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
+            raise e
+        except Exception as e:
+            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
     async def filter(
