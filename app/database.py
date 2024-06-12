@@ -69,7 +69,7 @@ sessionmanager = DatabaseSessionManager(
 )
 
 
-async def get_session():
+async def get_session() -> AsyncIterator[AsyncSession]:
     async with sessionmanager.session() as session:
         yield session
 
