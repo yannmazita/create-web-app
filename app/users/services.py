@@ -1,5 +1,5 @@
 import logging
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from sqlalchemy.exc import (
@@ -25,6 +25,7 @@ from app.users.models import (
     UserRolesUpdate,
     UserUsernameUpdate,
 )
+from app.users.repository import UserRepository
 from app.users.schemas import UserAttribute
 
 logger = logging.getLogger(__name__)
@@ -35,11 +36,11 @@ class UserServiceBase:
     Base class for user-related operations.
 
     Attributes:
-        session: The database session to be used for operations.
+        repository: The user repository to be used for operations.
     """
 
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, repository: UserRepository):
+        self.repository = repository
 
     async def create_user(self, user: UserCreate) -> User:
         """
@@ -49,178 +50,24 @@ class UserServiceBase:
         Returns:
             The created user.
         """
-        try:
-            logger.debug(f"Attempting to create user: {user.username}")
-            query = select(User).where(User.username == user.username)
-            response = await self.session.execute(query)
-            existing_user: User | None = response.scalar_one_or_none()
+        hashed_password = get_password_hash(user.password)
+        new_user = User(
+            id=uuid4(), username=user.username, hashed_password=hashed_password
+        )
+        new_user_data = new_user.model_dump()
+        created_user = await self.repository.create(new_user_data)
 
-            if existing_user:
-                logger.warning(f"User already exists: {user.username}")
-                raise user_already_exists
+        return created_user
 
-            hashed_password = get_password_hash(user.password)
-            new_user = User(
-                id=uuid4(), username=user.username, hashed_password=hashed_password
-            )
-            db_user = User.model_validate(new_user)
-
-            logger.debug(f"Adding new user to session: {db_user}")
-            self.session.add(db_user)
-
-            logger.debug("Committing session")
-            await self.session.commit()
-
-            logger.debug("Refreshing session")
-            await self.session.refresh(db_user)
-
-            logger.info(f"User created successfully: {db_user.username}")
-            return db_user
-        except IntegrityError as e:
-            logger.error(f"IntegrityError occurred: {e}", exc_info=False)
-            raise e
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except HTTPException as e:
-            logger.error(f"HTTPException occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
-
-    async def get_user_by_attribute(self, attribute: UserAttribute, value: str) -> User:
-        """
-        Get a user by a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-        Returns:
-            The user with the specified attribute and value.
-        """
-        try:
-            logger.debug(f"Attempting to get user by {attribute.value}: {value}")
-            query = select(User).where(getattr(User, attribute.value) == value)
-            response = await self.session.execute(query)
-            user = response.scalar_one()
-            logger.info(f"User found: {user.username}")
-            return user
-        except MultipleResultsFound:
-            logger.error(
-                f"Multiple users found for {attribute.value} = {value}", exc_info=False
-            )
-            raise multiple_users_found
-        except NoResultFound:
-            logger.warning(
-                f"No user found for {attribute.value} = {value}", exc_info=False
-            )
-            raise user_not_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
-
-    async def update_user_by_attribute(
-        self, attribute: UserAttribute, value: str, user: UserCreate
-    ) -> User:
-        """
-        Update a user using a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-            user: The new user data.
-        Returns:
-            The updated user.
-        """
-        try:
-            logger.debug(f"Attempting to update user by {attribute.value}: {value}")
-            user_db = await self.get_user_by_attribute(attribute, value)
-            user_data = user.model_dump()
-            for key, value in user_data.items():
-                if key != "id":
-                    setattr(user_db, key, value)
-            self.session.add(user_db)
-            await self.session.commit()
-            await self.session.refresh(user_db)
-            logger.info(f"User updated successfully: {user_db.username}")
-            return user_db
-        except NoResultFound:
-            logger.warning(
-                f"No user found for {attribute.value} = {value}", exc_info=False
-            )
-            raise user_not_found
-        except MultipleResultsFound:
-            logger.error(
-                f"Multiple users found for {attribute.value} = {value}", exc_info=False
-            )
-            raise multiple_users_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
-
-    async def delete_user(self, user: User) -> User:
+    async def delete_user(self, id: UUID) -> User:
         """
         Delete a user.
         Args:
-            user: The user to delete.
+            id: The ID of the user to delete.
         Returns:
             The deleted user.
         """
-        try:
-            logger.debug(f"Attempting to delete user: {user.username}")
-            await self.session.delete(user)
-            await self.session.commit()
-            logger.info(f"User deleted successfully: {user.username}")
-            return user
-        except NoResultFound:
-            logger.warning(f"No user found to delete: {user.username}", exc_info=False)
-            raise user_not_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
-
-    async def delete_user_by_attribute(
-        self, attribute: UserAttribute, value: str
-    ) -> User:
-        """
-        Delete a user using a specified attribute.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-        Returns:
-            The deleted user.
-        """
-        try:
-            logger.debug(f"Attempting to delete user by {attribute.value}: {value}")
-            user = await self.get_user_by_attribute(attribute, value)
-            await self.session.delete(user)
-            await self.session.commit()
-            logger.info(f"User deleted successfully: {user.username}")
-            return user
-        except NoResultFound:
-            logger.warning(
-                f"No user found for {attribute.value} = {value}", exc_info=False
-            )
-            raise user_not_found
-        except MultipleResultsFound:
-            logger.error(
-                f"Multiple users found for {attribute.value} = {value}", exc_info=False
-            )
-            raise multiple_users_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
+        return await self.repository.delete(id)
 
     async def get_users(self, offset: int = 0, limit: int = 100):
         """
@@ -231,26 +78,7 @@ class UserServiceBase:
         Returns:
             The list of users.
         """
-        try:
-            logger.debug(f"Fetching users with offset: {offset}, limit: {limit}")
-            total_count_query = select(func.count()).select_from(User)
-            total_count_response = await self.session.execute(total_count_query)
-            total_count: int = total_count_response.scalar_one()
-
-            users_query = select(User).offset(offset).limit(limit)
-            users_response = await self.session.execute(users_query)
-            users = users_response.scalars().all()
-            logger.info(f"Fetched {len(users)} users")
-            return users, total_count
-        except NoResultFound:
-            logger.warning("No users found", exc_info=False)
-            raise user_not_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
+        return await self.repository.all(offset, limit)
 
 
 class UserService(UserServiceBase):
