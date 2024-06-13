@@ -2,7 +2,7 @@ import logging
 from uuid import UUID
 from typing import Generic, TypeVar
 
-from sqlalchemy import BinaryExpression, Sequence, func, select
+from sqlalchemy import BinaryExpression, func, select
 from sqlalchemy.exc import (
     IntegrityError,
     MultipleResultsFound,
@@ -11,7 +11,7 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Base
+from app.models import Base
 
 logger = logging.getLogger(__name__)
 Model = TypeVar("Model", bound=Base)
