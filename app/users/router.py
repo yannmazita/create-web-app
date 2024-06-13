@@ -16,10 +16,8 @@ from app.users.models import (
     UserRolesUpdate,
     UserUsernameUpdate,
 )
-from app.users.schemas import UserAttribute
+from app.users.repository import UserRepository
 from app.users.services import UserAdminService, UserService
-
-from users.repository import UserRepository
 
 router = APIRouter(
     prefix="/users",
