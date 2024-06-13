@@ -1,5 +1,9 @@
 from app.repository import DatabaseRepository
+from sqlalchemy.ext.asyncio.session import AsyncSession
+
+from users.models import User
 
 
 class UserRepository(DatabaseRepository):
-    pass
+    def __init__(self, session: AsyncSession):
+        super().__init__(User, session)
