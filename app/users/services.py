@@ -97,15 +97,16 @@ class UserService(UserServiceBase):
         super().__init__(repository)
 
     async def update_user_password(
-        self, user: User, password_data: UserPasswordUpdate
+        self, id: UUID, password_data: UserPasswordUpdate
     ) -> None:
         """
         Update a user's password.
         Args:
-            user: The user.
+            id: The ID of the user.
             password_data: The new password data.
         """
-        logger.debug(f"Updating password for user: {user.username}")
+        logger.debug(f"Updating password for user with ID: {id}")
+        user: User = await self.repository.get(id)
         if not verify_password(password_data.old_password, user.hashed_password):
             logger.warning(f"Incorrect password for user: {user.username}")
             raise incorrect_password
