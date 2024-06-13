@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from jose import jwt
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.exceptions import incorrect_username_or_password
 from app.auth.utils import verify_password
@@ -13,12 +12,8 @@ from app.users.services import UserService
 logger = logging.getLogger(__name__)
 
 
-async def authenticate_user(session: AsyncSession, username: str, password: str):
-    service = UserService(session)
-    try:
-        user = await service.get_user_by_attribute(UserAttribute.USERNAME, username)
-    except Exception as e:
-        raise e
+async def authenticate_user(service: UserService, username: str, password: str):
+    # get user by username
     if not verify_password(password, user.hashed_password):
         raise incorrect_username_or_password
     logger.info(f"User {username} has been authenticated.")
