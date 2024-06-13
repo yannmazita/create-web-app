@@ -150,7 +150,7 @@ class DatabaseRepository(Generic[Model]):
             logger.error("Unexpected error occurred.", exc_info=False)
             raise e
 
-    async def all(self, offset: int = 0, limit: int = 100):
+    async def get_all(self, offset: int = 0, limit: int = 100):
         """
         Get all instances of the model from the database.
         Args:
