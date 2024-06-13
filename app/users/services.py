@@ -1,23 +1,8 @@
 import logging
 from uuid import UUID, uuid4
 
-from fastapi import HTTPException
-from sqlalchemy.exc import (
-    IntegrityError,
-    MultipleResultsFound,
-    NoResultFound,
-    SQLAlchemyError,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import func, select
-
 from app.auth.exceptions import incorrect_password
 from app.auth.utils import get_password_hash, verify_password
-from app.users.exceptions import (
-    multiple_users_found,
-    user_already_exists,
-    user_not_found,
-)
 from app.users.models import (
     User,
     UserCreate,
@@ -26,7 +11,6 @@ from app.users.models import (
     UserUsernameUpdate,
 )
 from app.users.repository import UserRepository
-from app.users.schemas import UserAttribute
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +43,27 @@ class UserServiceBase:
 
         return created_user
 
+    async def get_user(self, id: UUID) -> User:
+        """
+        Get a user by ID.
+        Args:
+            id: The ID of the user.
+        Returns:
+            The user.
+        """
+        return await self.repository.get(id)
+
+    async def update_user(self, id: UUID, data: User) -> User:
+        """
+        Update a user.
+        Args:
+            id: The ID of the user to update.
+            data: The updated user data.
+        Returns:
+            The updated user.
+        """
+        return await self.repository.update(id, data.model_dump())
+
     async def delete_user(self, id: UUID) -> User:
         """
         Delete a user.
@@ -78,18 +83,18 @@ class UserServiceBase:
         Returns:
             The list of users.
         """
-        return await self.repository.all(offset, limit)
+        return await self.repository.get_all(offset, limit)
 
 
 class UserService(UserServiceBase):
     """
     Class for user-related operations.
     Attributes:
-        session: The database session to be used for operations.
+        repository: The user repository to be used for operations.
     """
 
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
+    def __init__(self, repository: UserRepository):
+        super().__init__(repository)
 
     async def update_user_password(
         self, user: User, password_data: UserPasswordUpdate
@@ -100,109 +105,72 @@ class UserService(UserServiceBase):
             user: The user.
             password_data: The new password data.
         """
-        try:
-            logger.debug(f"Updating password for user: {user.username}")
-            if not verify_password(password_data.old_password, user.hashed_password):
-                logger.warning(f"Incorrect password for user: {user.username}")
-                raise incorrect_password
-            user.hashed_password = get_password_hash(password_data.new_password)
-            self.session.add(user)
-            await self.session.commit()
-            logger.info(f"Password updated for user: {user.username}")
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
+        logger.debug(f"Updating password for user: {user.username}")
+        if not verify_password(password_data.old_password, user.hashed_password):
+            logger.warning(f"Incorrect password for user: {user.username}")
+            raise incorrect_password
+        updated_user = user.model_copy()
+        updated_user.hashed_password = get_password_hash(password_data.new_password)
+        if user.id is not None:
+            await self.repository.update(user.id, updated_user.model_dump())
+        else:
+            # raise something?
+            logger.error("User ID is None", exc_info=False)
+        logger.info(f"Password updated for user: {user.username}")
 
 
 class UserAdminService(UserServiceBase):
     """
     Class for user-related operations.
     Attributes:
-        session: The database session to be used for operations.
+        repository: The user repository to be used for operations.
     """
 
-    def __init__(self, session: AsyncSession):
-        super().__init__(session)
+    def __init__(self, repository: UserRepository):
+        super().__init__(repository)
 
-    async def update_user_username_by_attribute(
-        self, attribute: UserAttribute, value: str, new_username: UserUsernameUpdate
+    async def update_user_username(
+        self, user: User, new_username: UserUsernameUpdate
     ) -> User:
         """
-        Update a user's username using a specified attribute.
+        Update a user's username.
         Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
+            user: The user.
             new_username: The new username.
         Returns:
             The updated user.
         """
-        try:
-            logger.debug(f"Updating username for user with {attribute.value}: {value}")
-            user = await self.get_user_by_attribute(attribute, value)
-            user.username = new_username.username
-            self.session.add(user)
-            await self.session.commit()
-            await self.session.refresh(user)
-            logger.info(
-                f"Username updated to {new_username.username} for user: {user.username}"
-            )
-            return user
-        except NoResultFound:
-            logger.warning(
-                f"No user found for {attribute.value} = {value}", exc_info=False
-            )
-            raise user_not_found
-        except MultipleResultsFound:
-            logger.error(
-                f"Multiple users found for {attribute.value} = {value}", exc_info=False
-            )
-            raise multiple_users_found
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemyError occurred: {e}", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred: {e}", exc_info=False)
-            raise e
+        logger.debug(f"Updating username for user:{user.username}")
+        updated_user = user.model_copy()
+        updated_user.username = new_username.username
+        if user.id is not None:
+            await self.repository.update(user.id, updated_user.model_dump())
+        else:
+            # raise something?
+            logger.error("User ID is None", exc_info=False)
+        logger.info(
+            f"Username updated to {new_username.username} for user: {user.username}"
+        )
+        return user
 
     async def update_user_roles_by_attribute(
-        self, attribute: UserAttribute, value: str, new_roles: UserRolesUpdate
+        self, user: User, new_roles: UserRolesUpdate
     ) -> User:
         """
         Update a user's roles using a specified attribute.
         Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
+            user: The user.
             new_roles: The new roles.
         Returns:
             The updated user.
         """
-        try:
-            logger.debug("Starting update_user_roles_by_attribute")
-            user = await self.get_user_by_attribute(attribute, value)
-            logger.debug(f"User found: {user}")
-
-            user.roles = new_roles.roles
-            self.session.add(user)
-            logger.debug(f"User added to session: {user}")
-
-            await self.session.commit()
-            logger.debug("Session committed")
-
-            await self.session.refresh(user)
-            logger.debug("Session refreshed")
-            return user
-        except NoResultFound:
-            logger.error("User not found", exc_info=False)
-            raise user_not_found
-        except MultipleResultsFound:
-            logger.error("Multiple users found", exc_info=False)
-            raise multiple_users_found
-        except SQLAlchemyError as e:
-            logger.error("SQLAlchemy error occurred", exc_info=False)
-            raise e
-        except Exception as e:
-            logger.error("Unexpected error occurred", exc_info=False)
-            raise e
+        logger.debug(f"Updating roles for user: {user.username}")
+        updated_user = user.model_copy()
+        updated_user.roles = new_roles.roles
+        if user.id is not None:
+            await self.repository.update(user.id, updated_user.model_dump())
+        else:
+            # raise something?
+            logger.error("User ID is None", exc_info=False)
+        logger.info(f"Roles updated for user: {user.username}")
+        return user
