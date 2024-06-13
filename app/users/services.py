@@ -130,32 +130,29 @@ class UserAdminService(UserServiceBase):
         super().__init__(repository)
 
     async def update_user_username(
-        self, user: User, new_username: UserUsernameUpdate
+        self, id: UUID, new_username: UserUsernameUpdate
     ) -> User:
         """
         Update a user's username.
         Args:
-            user: The user.
+            id: The ID of the user.
             new_username: The new username.
         Returns:
             The updated user.
         """
-        logger.debug(f"Updating username for user:{user.username}")
+        logger.debug(f"Updating username for user with ID: {id}")
+        user: User = await self.repository.get(id)
         updated_user = user.model_copy()
         updated_user.username = new_username.username
-        if user.id is not None:
-            await self.repository.update(user.id, updated_user.model_dump())
-        else:
-            # raise something?
-            logger.error("User ID is None", exc_info=False)
+        assert user.id is not None
+        await self.repository.update(user.id, updated_user.model_dump())
+        logger.error("User ID is None", exc_info=False)
         logger.info(
             f"Username updated to {new_username.username} for user: {user.username}"
         )
         return user
 
-    async def update_user_roles(
-        self, user: User, new_roles: UserRolesUpdate
-    ) -> User:
+    async def update_user_roles(self, id: UUID, new_roles: UserRolesUpdate) -> User:
         """
         Update a user's roles.
         Args:
@@ -164,7 +161,8 @@ class UserAdminService(UserServiceBase):
         Returns:
             The updated user.
         """
-        logger.debug(f"Updating roles for user: {user.username}")
+        logger.debug(f"Updating roles for user with ID: {id}")
+        user: User = await self.repository.get(id)
         updated_user = user.model_copy()
         updated_user.roles = new_roles.roles
         if user.id is not None:
