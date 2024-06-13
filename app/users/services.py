@@ -153,11 +153,11 @@ class UserAdminService(UserServiceBase):
         )
         return user
 
-    async def update_user_roles_by_attribute(
+    async def update_user_roles(
         self, user: User, new_roles: UserRolesUpdate
     ) -> User:
         """
-        Update a user's roles using a specified attribute.
+        Update a user's roles.
         Args:
             user: The user.
             new_roles: The new roles.
