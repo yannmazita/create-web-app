@@ -8,8 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.config import OAUTH_SCOPES
 from app.auth.models import TokenData
+from app.auth.services import AuthService
 from app.config import settings
 from app.database import get_session
+from app.users.models import User
+from app.users.repository import UserRepository
 from app.users.schemas import UserAttribute
 from app.users.services import UserService
 
@@ -63,10 +66,10 @@ async def validate_token(
 
     try:
         assert token_data.username is not None
-        service = UserService(session)
-        user = await service.get_user_by_attribute(
-            UserAttribute.USERNAME, token_data.username
-        )
+        repository = UserRepository(session)
+        service = AuthService(repository)
+        result = await service.filter(UserAttribute.USERNAME, token_data.username)
+        user: User = result[0]
         user_scopes: list[str] = user.roles.split(" ")
         # Allow admin users to act as if they have any scope
         if "admin" in user_scopes:

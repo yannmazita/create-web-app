@@ -1,16 +1,20 @@
 import logging
+from typing import Any
 from uuid import UUID, uuid4
 
 from app.auth.exceptions import incorrect_password
 from app.auth.utils import get_password_hash, verify_password
 from app.users.models import (
     User,
+)
+from app.users.repository import UserRepository
+from app.users.schemas import (
+    UserAttribute,
     UserCreate,
     UserPasswordUpdate,
     UserRolesUpdate,
     UserUsernameUpdate,
 )
-from app.users.repository import UserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +88,30 @@ class UserServiceBase:
             The list of users.
         """
         return await self.repository.get_all(offset, limit)
+
+    async def filter(
+        self,
+        attribute: UserAttribute,
+        value: Any,
+        update_data: dict | None = None,
+        delete: bool = False,
+    ):
+        """
+        Filter users by attribute and value.
+        Args:
+            attribute: The attribute to filter by.
+            value: The value to filter by.
+            update_data: Optional dictionary containing data for updating instances.
+            delete: Boolean flag to indicate if the matched instances should be deleted.
+        Returns:
+            The list of matched users.
+        """
+        # statement below doesn't work, bool type error
+        # 'Any' type breaks type hints
+        # print(await self.repository.filter(User.username == "test"))
+        return await self.repository.filter(
+            attribute == value, update_data=update_data, delete=delete
+        )
 
 
 class UserService(UserServiceBase):

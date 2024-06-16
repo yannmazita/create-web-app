@@ -7,6 +7,7 @@ from app.auth.dependencies import validate_token
 from app.auth.models import TokenData
 from app.database import get_session
 from app.users.models import User
+from app.users.repository import UserRepository
 from app.users.schemas import UserAttribute
 from app.users.services import UserService
 
@@ -22,13 +23,12 @@ async def get_own_user(
     Returns:
         A User instance representing own user.
     """
-    service = UserService(session)
+    repository = UserRepository(session)
+    service = UserService(repository)
     assert token_data.username is not None
     try:
-        user = await service.get_user_by_attribute(
-            UserAttribute.USERNAME, token_data.username
-        )
+        results = await service.filter(UserAttribute.USERNAME, token_data.username)
+        user: User = results[0]
     except Exception as e:
         raise e
-
     return user

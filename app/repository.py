@@ -1,8 +1,18 @@
 import logging
-from uuid import UUID
 from typing import Generic, TypeVar
+from uuid import UUID
 
-from sqlalchemy import BinaryExpression, func, select
+from sqlalchemy import (
+    BooleanClauseList,
+    func,
+    select,
+)
+from sqlalchemy import (
+    delete as sa_delete,
+)
+from sqlalchemy import (
+    update as sa_update,
+)
 from sqlalchemy.exc import (
     IntegrityError,
     MultipleResultsFound,
@@ -182,21 +192,63 @@ class DatabaseRepository(Generic[Model]):
             logger.error(f"Unexpected error occurred: {e}", exc_info=False)
             raise e
 
+    async def _filter_and_perform(
+        self,
+        operation,
+        expressions: list[BooleanClauseList] | None = None,
+        id: UUID | None = None,
+        data: dict | None = None,
+    ) -> None:
+        """
+        Filter instances of the model in the database and perform an operation.
+
+        This method is a helper method for performing operations on filtered instances.
+        Args:
+            operation: The operation to be performed.
+            expressions: Optional list of filter expressions.
+            id: Optional id of the instance to be filtered.
+            data: Optional dictionary containing data for updating instances.
+        """
+        query = operation(self.model)
+        if expressions:
+            query = query.where(*expressions)
+        if id:
+            query = query.where(self.model.id == id)
+        if data:
+            query = query.values(**data)
+
+        await self.session.execute(query)
+        await self.session.commit()
+
     async def filter(
         self,
-        *expressions: BinaryExpression,
-    ) -> list[Model]:
-        query = select(self.model)
-        if expressions:
-            query = query.where(*expressions)
-        return list(await self.session.scalars(query))
+        *expressions: BooleanClauseList,
+        update_data: dict | None = None,
+        delete: bool = False,
+    ):
+        """
+        Filter instances of the model in the database.
 
-    async def filter_one(
-        self,
-        *expressions: BinaryExpression,
-    ) -> Model:
+        Args:
+            *expressions: The filter expressions.
+            update_data: Optional dictionary containing data for updating instances.
+            delete: Boolean flag to indicate if the matched instances should be deleted.
+        Returns:
+            The list of matched instances.
+        """
         query = select(self.model)
         if expressions:
             query = query.where(*expressions)
+
         response = await self.session.execute(query)
-        return response.scalar_one()
+        instances = response.scalars().all()
+
+        if update_data:
+            await self._filter_and_perform(
+                sa_update, expressions=list(expressions), data=update_data
+            )
+
+        if delete:
+            await self._filter_and_perform(sa_delete, expressions=list(expressions))
+
+        return instances

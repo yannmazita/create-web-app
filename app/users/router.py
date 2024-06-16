@@ -10,13 +10,15 @@ from app.database import get_session
 from app.users.dependencies import get_own_user
 from app.users.models import (
     User,
+)
+from app.users.repository import UserRepository
+from app.users.schemas import (
     UserCreate,
     UserPasswordUpdate,
     UserRead,
     UserRolesUpdate,
     UserUsernameUpdate,
 )
-from app.users.repository import UserRepository
 from app.users.services import UserAdminService, UserService
 
 router = APIRouter(
