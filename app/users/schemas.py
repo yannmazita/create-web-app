@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, validate_call
 
 from app.auth.config import OAUTH_SCOPES
+from app.schemas import Base, UuidMixin
 
 
 class UserAttribute(Enum):
@@ -11,7 +12,13 @@ class UserAttribute(Enum):
     USERNAME = "username"
 
 
-class UserBase(BaseModel):
+class User(Base, UuidMixin):
+    username: str
+    hashed_password: str
+    roles: str = ""
+
+
+class UserBase(Base):
     username: str
 
 
@@ -19,8 +26,13 @@ class UserCreate(UserBase):
     password: str
 
 
+class UserUpdate(Base):
+    username: str | None = None
+    password: str | None = None
+    roles: str | None = None
+
+
 class UserRead(UserBase):
-    id: UUID
     roles: str
 
 
