@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID, uuid4
 
 from app.auth.exceptions import incorrect_password
@@ -9,10 +8,13 @@ from app.users.models import (
 )
 from app.users.repository import UserRepository
 from app.users.schemas import (
-    UserAttribute,
+    User as UserSchema,
+)
+from app.users.schemas import (
     UserCreate,
     UserPasswordUpdate,
     UserRolesUpdate,
+    UserUpdate,
     UserUsernameUpdate,
 )
 
@@ -39,11 +41,10 @@ class UserServiceBase:
             The created user.
         """
         hashed_password = get_password_hash(user.password)
-        new_user = User(
+        new_user = UserSchema(
             id=uuid4(), username=user.username, hashed_password=hashed_password
         )
-        new_user_data = new_user.model_dump()
-        created_user = await self.repository.create(new_user_data)
+        created_user = await self.repository.create(new_user)
 
         return created_user
 
@@ -55,9 +56,9 @@ class UserServiceBase:
         Returns:
             The user.
         """
-        return await self.repository.get(id)
+        return await self.repository.get_by_attribute(id)
 
-    async def update_user(self, id: UUID, data: User) -> User:
+    async def update_user(self, id: UUID, data: UserUpdate) -> User:
         """
         Update a user.
         Args:
@@ -66,7 +67,7 @@ class UserServiceBase:
         Returns:
             The updated user.
         """
-        return await self.repository.update(id, data.model_dump())
+        return await self.repository.update_by_attribute(data, id)
 
     async def delete_user(self, id: UUID) -> User:
         """
@@ -88,30 +89,6 @@ class UserServiceBase:
             The list of users.
         """
         return await self.repository.get_all(offset, limit)
-
-    async def filter(
-        self,
-        attribute: UserAttribute,
-        value: Any,
-        update_data: dict | None = None,
-        delete: bool = False,
-    ):
-        """
-        Filter users by attribute and value.
-        Args:
-            attribute: The attribute to filter by.
-            value: The value to filter by.
-            update_data: Optional dictionary containing data for updating instances.
-            delete: Boolean flag to indicate if the matched instances should be deleted.
-        Returns:
-            The list of matched users.
-        """
-        # statement below doesn't work, bool type error
-        # 'Any' type breaks type hints
-        # print(await self.repository.filter(User.username == "test"))
-        return await self.repository.filter(
-            attribute == value, update_data=update_data, delete=delete
-        )
 
 
 class UserService(UserServiceBase):
