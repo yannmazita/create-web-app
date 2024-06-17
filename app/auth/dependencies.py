@@ -8,13 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.config import OAUTH_SCOPES
 from app.auth.models import TokenData
-from app.auth.services import AuthService
 from app.config import settings
 from app.database import get_session
 from app.users.models import User
 from app.users.repository import UserRepository
 from app.users.schemas import UserAttribute
-from app.users.services import UserService
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="login",
@@ -65,9 +63,7 @@ async def validate_token(
         raise credentials_exception
 
     try:
-        assert token_data.username is not None
         repository = UserRepository(session)
-        service = AuthService(repository)
         result = await service.filter(UserAttribute.USERNAME, token_data.username)
         user: User = result[0]
         user_scopes: list[str] = user.roles.split(" ")
