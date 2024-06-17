@@ -4,7 +4,7 @@ from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.database import get_session
 from app.users.models import User
 from app.users.repository import UserRepository

@@ -46,7 +46,8 @@ class DatabaseRepository(Generic[Model, Schema]):
         """
         try:
             logger.debug(f"Creating {self.model.__name__}")
-            instance = self.model(**data.model_dump())
+            # suspected upstreeam bug with typing here
+            instance = self.model(**data.model_dump())  # type: ignore
             logger.debug(f"Adding {self.model.__name__} to session")
             self.session.add(instance)
             logger.debug("Committing session")
@@ -120,7 +121,8 @@ class DatabaseRepository(Generic[Model, Schema]):
             logger.debug(f"Updating {self.model.__name__} with {column} {value}")
             instance = await self.get_by_attribute(value, column, with_for_update=True)
 
-            items = data.model_dump(exclude_unset=True).items()
+            # suspected upstreeam bug with typing here
+            items = data.model_dump(exclude_unset=True).items() # type: ignore
             for key, value in items:
                 # if key != "id":
                 setattr(instance, key, value)

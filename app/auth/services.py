@@ -10,8 +10,6 @@ from app.config import settings
 from app.users.models import User
 from app.users.repository import UserRepository
 
-from app.users.schemas import UserAttribute
-
 logger = logging.getLogger(__name__)
 
 
@@ -19,18 +17,13 @@ class AuthServiceBase:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    async def get_user_for_authentication(self, username: str) -> User:
-        # bool type error
-        results = await self.repository.filter(UserAttribute.USERNAME == username)
-        return results[0]
-
 
 class AuthService(AuthServiceBase):
     def __init__(self, repository: UserRepository):
         super().__init__(repository)
 
     async def authenticate_user(self, username: str, password: str):
-        user: User = await self.get_user_for_authentication(username)
+        user: User = await self.repository.get_by_attribute(username, "username")
         if not verify_password(password, user.hashed_password):
             raise incorrect_username_or_password
         logger.info(f"User {username} has been authenticated.")

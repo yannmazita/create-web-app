@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.config import OAUTH_SCOPES
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.config import settings
 from app.database import get_session
 from app.users.models import User

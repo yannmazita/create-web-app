@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import validate_token
-from app.auth.models import TokenData
+from app.auth.schemas import TokenData
 from app.database import get_session
 from app.users.dependencies import get_own_user
 from app.users.models import (
