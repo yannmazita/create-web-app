@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from app.auth.exceptions import incorrect_username_or_password
-from app.auth.models import Token
+from app.auth.schemas import Token
 from app.auth.utils import verify_password
 from app.config import settings
 from app.users.models import User
