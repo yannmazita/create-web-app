@@ -29,12 +29,10 @@ async def create_fake_users():
         repository = UserRepository(session)
         admin_service = UserAdminService(repository)
         for i in range(40):
-            user: UserCreate = UserCreate(
-                username=f"fake_user_{i}",
-                password="secret",
-            )
             try:
-                fake_user: User = await repository.create(user)
+                fake_user: User = await repository.create(
+                    UserCreate(username=f"fake_user_{i}", password="secret")
+                )
                 if i % 2 == 0:
                     await admin_service.update_user_roles(
                         fake_user.id,
