@@ -2,17 +2,9 @@ import logging
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel
 from sqlalchemy import (
-    BooleanClauseList,
     func,
     select,
-)
-from sqlalchemy import (
-    delete as sa_delete,
-)
-from sqlalchemy import (
-    update as sa_update,
 )
 from sqlalchemy.exc import (
     IntegrityError,
@@ -27,9 +19,10 @@ from app.schemas import Base as BaseSchema
 
 logger = logging.getLogger(__name__)
 Model = TypeVar("Model", bound=Base)
+Schema = TypeVar("Schema", bound=BaseSchema)
 
 
-class DatabaseRepository(Generic[Model]):
+class DatabaseRepository(Generic[Model, Schema]):
     """
     Repository for performing database queries.
 
@@ -42,7 +35,7 @@ class DatabaseRepository(Generic[Model]):
         self.model: type[Model] = model
         self.session: AsyncSession = session
 
-    async def create(self, data: BaseSchema) -> Model:
+    async def create(self, data: type[Schema]) -> Model:
         """
         Create a new instance of the model in the database.
 
@@ -72,19 +65,27 @@ class DatabaseRepository(Generic[Model]):
             logger.error("Unexpected error occurred.", exc_info=False)
             raise e
 
-    async def get_by_attribute(self, value: UUID | str, column: str = "id") -> Model:
+    async def get_by_attribute(
+        self, value: UUID | str, column: str = "id", with_for_update: bool = False
+    ) -> Model:
         """
         Get an instance of the model from the database.
 
         Args:
             value: The value of the attribute to be used for filtering.
             column: The column to be used for filtering.
+            with_for_update:
         Returns:
             The retrieved instance.
         """
         try:
             logger.debug(f"Getting {self.model.__name__} with {column} {value}")
             query = select(self.model).where(getattr(self.model, column) == value)
+
+            if with_for_update:
+                logger.debug(f"Locking column {id}")
+                query.with_for_update()
+
             response = await self.session.execute(query)
             instance = response.scalar_one()
             logger.info(f"Got {self.model.__name__} with {column} {value}")
@@ -103,7 +104,7 @@ class DatabaseRepository(Generic[Model]):
             raise e
 
     async def update_by_attribute(
-        self, data: BaseSchema, value: UUID | str, column: str = "id"
+        self, data: type[Schema], value: UUID | str, column: str = "id"
     ) -> Model:
         """
         Update an instance of the model in the database.
@@ -117,7 +118,7 @@ class DatabaseRepository(Generic[Model]):
         """
         try:
             logger.debug(f"Updating {self.model.__name__} with {column} {value}")
-            instance = await self.get_by_attribute(value, column)
+            instance = await self.get_by_attribute(value, column, with_for_update=True)
 
             items = data.model_dump(exclude_unset=True).items()
             for key, value in items:
