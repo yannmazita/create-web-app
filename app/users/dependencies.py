@@ -8,8 +8,6 @@ from app.auth.models import TokenData
 from app.database import get_session
 from app.users.models import User
 from app.users.repository import UserRepository
-from app.users.schemas import UserAttribute
-from app.users.services import UserService
 
 
 async def get_own_user(
@@ -21,14 +19,8 @@ async def get_own_user(
         token_data: Token data.
         session: The database session.
     Returns:
-        A User instance representing own user.
+        Own user.
     """
     repository = UserRepository(session)
-    service = UserService(repository)
-    assert token_data.username is not None
-    try:
-        results = await service.filter(UserAttribute.USERNAME, token_data.username)
-        user: User = results[0]
-    except Exception as e:
-        raise e
+    user: User = await repository.get_by_attribute(token_data.username, "username")
     return user
