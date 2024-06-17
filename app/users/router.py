@@ -14,10 +14,8 @@ from app.users.models import (
 from app.users.repository import UserRepository
 from app.users.schemas import (
     UserCreate,
-    UserPasswordUpdate,
     UserRead,
-    UserRolesUpdate,
-    UserUsernameUpdate,
+    UserUpdate,
 )
 from app.users.services import UserAdminService, UserService
 
@@ -29,14 +27,12 @@ router = APIRouter(
 
 @router.post("/", response_model=UserRead)
 async def create_user(
-    user: UserCreate,
+    data: UserCreate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: AsyncSession = Depends(get_session),
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
-
-    new_user = await service.create_user(user)
+    new_user = await repository.create(data)
     return new_user
 
 
@@ -47,8 +43,7 @@ async def get_user_by_id(
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
-    user = await service.get_user(id)
+    user = await repository.get_by_attribute(id)
     return user
 
 
@@ -60,21 +55,19 @@ async def get_all_users(
     limit: int = 100,
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
-    users, total_count = await service.get_users(offset, limit)
+    users, total_count = await repository.get_all(offset, limit)
     return users, total_count
 
 
 @router.put("/id/{id}", response_model=UserRead)
 async def update_user_by_id(
     id: UUID,
-    user: User,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
-    updated_user = await service.update_user(id, user)
+    updated_user = await repository.update_by_attribute(data, id)
     return updated_user
 
 
@@ -85,34 +78,33 @@ async def delete_user_by_id(
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
-    user = await service.delete_user(id)
+    user = await repository.delete(id)
     return user
 
 
 @router.patch("/id/{id}/username", response_model=UserRead)
 async def update_user_username_by_id(
     id: UUID,
-    username_data: UserUsernameUpdate,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
     admin_service = UserAdminService(repository)
-    updated_user = await admin_service.update_user_username(id, username_data)
+    updated_user = await admin_service.update_user_username(id, data)
     return updated_user
 
 
 @router.patch("/id/{id}/roles", response_model=UserRead)
 async def update_user_roles_by_id(
     id: UUID,
-    roles_data: UserRolesUpdate,
+    data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
     admin_service = UserAdminService(repository)
-    updated_user = await admin_service.update_user_roles(id, roles_data)
+    updated_user = await admin_service.update_user_roles(id, data)
     return updated_user
 
 
@@ -127,9 +119,8 @@ async def delete_own_user(
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
-    service = UserService(repository)
     if user.id is not None:
-        user = await service.delete_user(user.id)
+        user = await repository.delete(user.id)
         return user
     else:
         # raise something
@@ -139,12 +130,14 @@ async def delete_own_user(
 @router.patch("/me/password", response_model=UserRead)
 async def update_own_password(
     user: Annotated[User, Depends(get_own_user)],
-    password_data: UserPasswordUpdate,
+    data: UserUpdate,
     session: Annotated[AsyncSession, Depends(get_session)],
 ):
     repository = UserRepository(session)
     service = UserService(repository)
     if user.id is not None:
-        updated_user = await service.update_user_password(user.id, password_data)
+        updated_user = await service.update_user_password(user.id, data)
         return updated_user
-    return user
+    else:
+        # raise something
+        pass
