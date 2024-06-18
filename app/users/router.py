@@ -29,10 +29,10 @@ router = APIRouter(
 async def create_user(
     data: UserCreate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
-    session: AsyncSession = Depends(get_session),
+    session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
-    new_user = await repository.create(data)
+    new_user = await repository.create(session, data)
     return new_user
 
 
@@ -41,9 +41,9 @@ async def get_user_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
-    user = await repository.get_by_attribute(id)
+    user = await repository.get_by_attribute(session, id)
     return user
 
 
@@ -51,11 +51,11 @@ async def get_user_by_id(
 async def get_all_users(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
     offset: int = 0,
     limit: int = 100,
 ):
-    repository = UserRepository(session)
-    users, total_count = await repository.get_all(offset, limit)
+    users, total_count = await repository.get_all(session, offset, limit)
     return users, total_count
 
 
@@ -65,9 +65,9 @@ async def update_user_by_id(
     data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
-    updated_user = await repository.update_by_attribute(data, id)
+    updated_user = await repository.update_by_attribute(session, data, id)
     return updated_user
 
 
@@ -76,9 +76,9 @@ async def delete_user_by_id(
     id: UUID,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
-    user = await repository.delete(id)
+    user = await repository.delete(session, id)
     return user
 
 
@@ -88,10 +88,10 @@ async def update_user_username_by_id(
     data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     admin_service = UserAdminService(repository)
-    updated_user = await admin_service.update_user_username(id, data)
+    updated_user = await admin_service.update_user_username(session, id, data)
     return updated_user
 
 
@@ -101,10 +101,10 @@ async def update_user_roles_by_id(
     data: UserUpdate,
     token_data: Annotated[TokenData, Security(validate_token, scopes=["admin"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     admin_service = UserAdminService(repository)
-    updated_user = await admin_service.update_user_roles(id, data)
+    updated_user = await admin_service.update_user_roles(session, id, data)
     return updated_user
 
 
@@ -117,10 +117,10 @@ async def get_own_user(user: Annotated[User, Depends(get_own_user)]):
 async def delete_own_user(
     user: Annotated[User, Depends(get_own_user)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     if user.id is not None:
-        user = await repository.delete(user.id)
+        user = await repository.delete(session, user.id)
         return user
     else:
         # raise something
@@ -132,11 +132,11 @@ async def update_own_password(
     user: Annotated[User, Depends(get_own_user)],
     data: UserUpdate,
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     service = UserService(repository)
     if user.id is not None:
-        updated_user = await service.update_user_password(user.id, data)
+        updated_user = await service.update_user_password(session, user.id, data)
         return updated_user
     else:
         # raise something

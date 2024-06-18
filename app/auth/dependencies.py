@@ -12,7 +12,6 @@ from app.config import settings
 from app.database import get_session
 from app.users.models import User
 from app.users.repository import UserRepository
-from app.users.schemas import UserAttribute
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="login",
@@ -25,12 +24,14 @@ async def validate_token(
     security_scopes: SecurityScopes,
     token: Annotated[str, Depends(oauth2_scheme)],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ) -> TokenData:
     """Validate token and check if it has the required scopes.
     Args:
         security_scopes: Scopes required by the dependent.
         token: Token to validate.
         session: Database session.
+        repository: User repository.
     Returns:
         A TokenData instance representing the token data.
     """
@@ -63,9 +64,9 @@ async def validate_token(
         raise credentials_exception
 
     try:
-        repository = UserRepository(session)
-        result = await service.filter(UserAttribute.USERNAME, token_data.username)
-        user: User = result[0]
+        user: User = await repository.get_by_attribute(
+            session, token_data.username, "username"
+        )
         user_scopes: list[str] = user.roles.split(" ")
         # Allow admin users to act as if they have any scope
         if "admin" in user_scopes:

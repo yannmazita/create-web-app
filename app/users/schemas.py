@@ -60,7 +60,7 @@ class UserUpdate(Base):
                 raise ValueError(f"Invalid roles: {given_roles - valid_roles}")
 
 
-class UserRead(UserBase):
+class UserRead(UserBase, UuidMixin):
     roles: str
 
 

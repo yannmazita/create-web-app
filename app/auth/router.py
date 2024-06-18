@@ -16,12 +16,11 @@ router = APIRouter(tags=["tokens"])
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     service = AuthService(repository)
-
     token: Token = await service.get_access_token(
-        form_data.scopes, form_data.username, form_data.password
+        session, form_data.scopes, form_data.username, form_data.password
     )
     return token
 
@@ -30,10 +29,12 @@ async def login_for_access_token(
 async def register_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ):
-    repository = UserRepository(session)
     service = AuthService(repository)
 
     # Implement deeper registration logic (email service?)
-    token: Token = await service.get_access_token(form_data.scopes, form_data.username)
+    token: Token = await service.get_access_token(
+        session, form_data.scopes, form_data.username
+    )
     return token

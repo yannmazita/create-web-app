@@ -13,14 +13,17 @@ from app.users.repository import UserRepository
 async def get_own_user(
     token_data: Annotated[TokenData, Security(validate_token, scopes=["user:own"])],
     session: Annotated[AsyncSession, Depends(get_session)],
+    repository: Annotated[UserRepository, Depends()],
 ) -> User:
     """Get own user.
     Args:
         token_data: Token data.
         session: The database session.
+        repository: User repository.
     Returns:
         Own user.
     """
-    repository = UserRepository(session)
-    user: User = await repository.get_by_attribute(token_data.username, "username")
+    user: User = await repository.get_by_attribute(
+        session, token_data.username, "username"
+    )
     return user
