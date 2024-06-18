@@ -5,7 +5,7 @@ from app.users.schemas import UserCreate, UserUpdate
 from app.users.services import UserAdminService
 from app.users.repository import UserRepository
 
-loggeer = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 async def create_superuser():
@@ -13,6 +13,7 @@ async def create_superuser():
         repository = UserRepository(session)
         admin_service = UserAdminService(repository)
         try:
+            logger.info("Creating superuser with username 'admin'")
             admin_user: User = await repository.create(
                 UserCreate(username="admin", password="secret")
             )
@@ -20,7 +21,7 @@ async def create_superuser():
                 admin_user.id, UserUpdate(roles="admin")
             )
         except Exception:
-            # handled earlier
+            logger.warning("Failed to create")
             pass
 
 
@@ -39,5 +40,5 @@ async def create_fake_users():
                         UserUpdate(roles="user:own websockets"),
                     )
             except Exception:
-                # handled earlier
+                logger.warning(f"Failed to create fake user {i}")
                 pass
