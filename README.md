@@ -81,7 +81,7 @@ Attention: when directly spinning up backend services you have to copy `pyprojec
     <summary>More detail</summary>
 
 - The database lives in a `Postgresql` container.
-- `Python` backend using `FastAPI` and several other utilities like `SQLModel`, `SQLAlchemy` and `Pydantic`. The backend is served using `uvicorn`.
+- `Python` backend using `FastAPI`, `SQLAlchemy` ORM and `Pydantic` verification. The backend is served using `uvicorn`.
 - `Vue3/Typescript` frontend using `vite`. In the development environment the frontend is served using vite, in production `NGINX` is used.
 </details>
 

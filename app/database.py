@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlmodel import SQLModel
 
+from app.models import Base
 from app.config import settings
 
 # use pydantic url validation abilities instead
@@ -69,11 +69,11 @@ sessionmanager = DatabaseSessionManager(
 )
 
 
-async def get_session():
+async def get_session() -> AsyncIterator[AsyncSession]:
     async with sessionmanager.session() as session:
         yield session
 
 
 async def create_db_and_tables():
     async with sessionmanager._engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
