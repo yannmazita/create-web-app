@@ -1,14 +1,7 @@
-from enum import Enum
-
 from pydantic import BaseModel, validate_call
 
 from app.auth.config import OAUTH_SCOPES
 from app.schemas import Base, UuidMixin
-
-
-class UserAttribute(Enum):
-    ID = "id"
-    USERNAME = "username"
 
 
 class User(Base, UuidMixin):
