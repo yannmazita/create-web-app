@@ -24,7 +24,12 @@ class UserRepository(DatabaseRepository):
         return await super().create(session, new_user)
 
     async def update_by_attribute(
-        self, session, data: UserUpdate, value: UUID | str, column: str = "id"
+        self,
+        session,
+        data: UserUpdate,
+        value: UUID | str,
+        column: str = "id",
+        none_replace: bool = False,
     ) -> User:
         db_user: User = await super().get_by_attribute(session, value, column, True)
 
@@ -34,4 +39,6 @@ class UserRepository(DatabaseRepository):
                 raise ValueError("Incorrect password.")
             elif data.new_password is not None:
                 db_user.hashed_password = get_password_hash(data.new_password)
-        return await super().update_by_attribute(session, data, value, column)
+        return await super().update_by_attribute(
+            session, data, value, column, none_replace
+        )

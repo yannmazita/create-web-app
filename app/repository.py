@@ -117,6 +117,7 @@ class DatabaseRepository(Generic[Model, Schema]):
         data: type[Schema],
         value: UUID | str,
         column: str = "id",
+        none_replace: bool = False,
     ) -> Model:
         """
         Update an instance of the model in the database.
@@ -126,6 +127,7 @@ class DatabaseRepository(Generic[Model, Schema]):
             data: The data to be used for updating the instance.
             value: The value of the attribute to be used for filtering.
             column: The column to be used for filtering.
+            none_replace: Whether to replace None values in the data.
         Returns:
             The updated instance.
         """
@@ -138,7 +140,8 @@ class DatabaseRepository(Generic[Model, Schema]):
             # suspected upstreeam bug with typing here
             items = data.model_dump(exclude_unset=True).items()  # type: ignore
             for key, value in items:
-                # if key != "id":
+                if value is None and not none_replace:
+                    continue
                 setattr(instance, key, value)
             logger.debug(f"Adding {self.model.__name__} to session")
             session.add(instance)
