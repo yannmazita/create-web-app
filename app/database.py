@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from app.models import Base
 from app.config import settings
 
+
 # use pydantic url validation abilities instead
 ASYNC_POSTGRES_URL: str = (
     "postgresql+asyncpg://"
