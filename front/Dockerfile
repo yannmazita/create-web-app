@@ -15,7 +15,7 @@ FROM base as builder
 COPY public /application/public
 COPY src /application/src
 COPY package.json postcss.config.js tailwind.config.js tsconfig.json \
-    tsconfig.node.json vite.config.ts index.html \
+    tsconfig.node.json tsconfig.app.json tsconfig.configs.json vite.config.ts index.html \
     ./
 
 # Install dependencies
