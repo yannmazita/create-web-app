@@ -13,13 +13,13 @@ pydantic = "^2.5.2"
 fastapi = "^0.109.1"
 uvicorn = { extras = ["standard"], version = "^0.24.0.post1" }
 python-multipart = ">0.0.7"
-python-jose = { extras = ["cryptography"], version = ">=3.3.0" }
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-dotenv = "^1.0.0"
 requests = "^2.31.0"
 pydantic-settings = "^2.2.1"
 asyncpg = "^0.29.0"
 sqlalchemy = "^2.0.31"
+pyjwt = "^2.9.0"
 
 [build-system]
 requires = ["poetry-core"]

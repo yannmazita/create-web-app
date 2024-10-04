@@ -1,8 +1,8 @@
 from typing import Annotated
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
-from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,7 +60,7 @@ async def validate_token(
             raise credentials_exception
         token_scopes = payload.get("scopes", [])
         token_data = TokenData(scopes=token_scopes, username=username)
-    except (JWTError, ValidationError):
+    except (jwt.DecodeError, ValidationError):
         raise credentials_exception
 
     try:

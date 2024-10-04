@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
+import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.exceptions import incorrect_username_or_password
 from app.auth.schemas import Token
@@ -9,7 +10,6 @@ from app.auth.utils import verify_password
 from app.config import settings
 from app.users.models import User
 from app.users.repository import UserRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
